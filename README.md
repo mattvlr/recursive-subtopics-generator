@@ -1,51 +1,43 @@
-Recursive Subtopics Generator
-This project uses the OpenAI GPT-3.5-turbo API to generate a hierarchical structure of subtopics for a list of given topics. The generated subtopics are organized into folders to provide an easy-to-understand structure.
+# Recursive Subtopics Generator
+This project is a Python script that generates a hierarchical structure of subtopics for a given list of topics using GPT-3.5-turbo from OpenAI. It creates subtopic directories in a JSON folder and allows the user to set the maximum depth level for subtopic generation.
 
-Features
-Recursively generates subtopics for given topics
-Creates a directory structure to represent the hierarchy of subtopics
-Customizable depth for subtopic generation
-Utilizes the OpenAI GPT-3.5-turbo API for subtopic generation
-Prerequisites
-Python 3.6 or higher
-An OpenAI API key
-Dependencies
-openai - Install using pip install openai
-Setup
-Clone the repository:
-bash
-Copy code
-git clone https://github.com/your_username/recursive-subtopics-generator.git
-Enter the project directory:
-bash
-Copy code
-cd recursive-subtopics-generator
-Install the required dependencies:
-Copy code
+## Features
+
+- Generate subtopics for a given list of topics using GPT-3.5-turbo
+- Create hierarchical directory structure for subtopics in a JSON folder
+- User can set a maximum depth level for subtopic generation
+
+## Use Cases
+
+This project can be used to create a hierarchical structure of topics and subtopics for various purposes, such as:
+
+- Organizing knowledge in a wiki-like format
+- Creating a structured database of topics for a content management system
+- Developing a content recommendation system based on related topics
+
+## Prerequisites
+
+To use this script, you need an API key for OpenAI's GPT-3.5-turbo. Sign up for an API key [here](https://beta.openai.com/signup/).
+
+## Installation
+
+1. Clone the repository:
+git clone https://github.com/mattvlr/recursive-subtopics-generator
+2. Install the required dependencies:
 pip install -r requirements.txt
-Create a config.py file in the project root directory with the following content:
-python
-Copy code
-# config.py
+3. Set your OpenAI API key as an environment variable:
+config.py
 
-API_KEY = "your_openai_api_key_here"
-Replace your_openai_api_key_here with your actual OpenAI API key.
+## Usage
 
-Usage
-Modify the main() function in main.py to include the topics you'd like to generate subtopics for:
-python
-Copy code
-topics = [
-    "Medicine", "Military", "Music", "Mythology", "Natural disasters", "Other", "Philosophy", "Physics", "Politics", "Psychology", "Religion", "Science", "Sociology", "Sports", "Technology", "Telecommunications", "Transportation", "Travel"
-]
-Run the script:
-css
-Copy code
-python main.py
-The generated subtopics will be organized into folders under the ./json/ directory.
-Use Cases
-Content creators can use this tool to generate a structured set of subtopics for their main topics. This can help them plan and organize their content more efficiently.
-Educators can use the generated hierarchy of subtopics to create lesson plans and course outlines.
-Researchers can use the subtopics as a starting point for exploring a specific topic in depth.
-License
-This project is licensed under the MIT License. See the LICENSE file for more information.
+1. Modify the `main` function in `subtopic_generator.py` to customize the list of topics and the maximum depth level for subtopic generation.
+
+2. Run the script:
+python3 main.py
+3. The script will create subtopic directories in the `json` folder, organized by the specified topics and subtopics.
+
+4. Explore the generated subtopic hierarchy in the `json` folder.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

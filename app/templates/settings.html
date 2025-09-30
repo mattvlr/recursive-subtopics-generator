@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Settings · Subtopic Explorer{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="h3 mb-3">Workspace settings</h1>
+        <p class="text-muted">Configure how topic maps are generated, manage your OpenAI API key, and customize quick-start topics.</p>
+        <form method="post" action="{{ url_for('main.settings') }}">
+          <div class="mb-4">
+            <h2 class="h5">OpenAI connection</h2>
+            <div class="mb-3">
+              <label for="api_key" class="form-label">API key</label>
+              <input type="password" class="form-control" id="api_key" name="api_key" value="{{ settings.api_key }}" autocomplete="off" placeholder="sk-...">
+              <div class="form-text">Current status: <strong>{{ masked_api_key }}</strong></div>
+              <div class="form-text">Leave blank to keep the stored key. The app falls back to demo mode when no key is provided.</div>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="1" id="clear_api_key" name="clear_api_key">
+              <label class="form-check-label" for="clear_api_key">Remove saved key</label>
+            </div>
+          </div>
+          <div class="mb-4">
+            <h2 class="h5">Default generation options</h2>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="default_model" class="form-label">Preferred model</label>
+                <select class="form-select" id="default_model" name="default_model">
+                  {% for option in available_models %}
+                    <option value="{{ option }}" {% if option == settings.default_model %}selected{% endif %}>{{ option }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="default_depth" class="form-label">Default depth</label>
+                <input type="number" min="1" max="6" class="form-control" id="default_depth" name="default_depth" value="{{ settings.default_depth }}">
+                <div class="form-text">How many levels the recursion explores by default.</div>
+              </div>
+              <div class="col-md-4">
+                <label for="default_temperature" class="form-label">Creativity</label>
+                <input type="number" step="0.1" min="0" max="1" class="form-control" id="default_temperature" name="default_temperature" value="{{ settings.default_temperature }}">
+                <div class="form-text">Higher values produce more varied subtopics.</div>
+              </div>
+            </div>
+            <div class="form-check form-switch mt-3">
+              <input class="form-check-input" type="checkbox" role="switch" id="default_demo_mode" name="default_demo_mode" value="1" {% if settings.default_demo_mode %}checked{% endif %}>
+              <label class="form-check-label" for="default_demo_mode">Enable demo mode by default</label>
+            </div>
+          </div>
+          <div class="mb-4">
+            <h2 class="h5">Starter topics</h2>
+            <label for="default_topics" class="form-label">Comma or newline separated topics</label>
+            <textarea class="form-control" id="default_topics" name="default_topics" rows="5" placeholder="e.g. Quantum Computing, Urban Farming">{{ settings.default_topics | join('\n') }}</textarea>
+            <div class="form-text">These topics appear as quick-add chips on the home page when the generation form is empty.</div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <p class="text-muted small mb-0">Changes are saved locally to <code>instance/settings.json</code>.</p>
+            <button type="submit" class="btn btn-primary">Save settings</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  const apiField = document.getElementById('api_key');
+  if (apiField) {
+    apiField.addEventListener('focus', () => {
+      apiField.type = 'text';
+    });
+    apiField.addEventListener('blur', () => {
+      apiField.type = 'password';
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ entry['topics']|join(', ') }} · Subtopic Explorer{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1 d-flex align-items-center gap-2">
+      {{ entry['topics']|join(', ') }}
+      <form method="post" action="{{ url_for('main.toggle_favorite', entry_id=entry['id']) }}">
+        <input type="hidden" name="value" value="{{ '0' if entry.get('is_favorite') else '1' }}">
+        <input type="hidden" name="next" value="{{ request.url }}">
+        <button type="submit" class="btn btn-link p-0 favorite-toggle" aria-label="Toggle favorite">
+          {% if entry.get('is_favorite') %}★{% else %}☆{% endif %}
+        </button>
+      </form>
+    </h1>
+    <p class="text-muted mb-0">Generated {{ entry['created_at']|format_datetime }} · Depth {{ entry['max_level'] }} · {{ entry['model'] }} · {{ 'Demo mode' if entry['use_demo_mode'] else 'Live mode' }}</p>
+  </div>
+  <div class="btn-group">
+    <a class="btn btn-outline-secondary" href="{{ url_for('main.history') }}">Back to history</a>
+    <a class="btn btn-primary" href="{{ url_for('main.download_history_entry', entry_id=entry['id']) }}">Download JSON</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="card-title h5">Topic map</h2>
+        {% if entry.get('trees') %}
+        <ul class="topic-tree">
+          {% for tree in entry['trees'] %}
+            {% include 'partials/tree.html' with context %}
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">No tree data available.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="card-title h5">Generation details</h2>
+        <dl class="row small">
+          <dt class="col-5">Topics</dt>
+          <dd class="col-7">{{ entry['topics']|join(', ') }}</dd>
+          <dt class="col-5">Depth</dt>
+          <dd class="col-7">{{ entry['max_level'] }}</dd>
+          <dt class="col-5">Model</dt>
+          <dd class="col-7">{{ entry['model'] }}</dd>
+          <dt class="col-5">Mode</dt>
+          <dd class="col-7">{{ 'Demo' if entry['use_demo_mode'] else 'Live' }}</dd>
+        </dl>
+        <h3 class="h6 mt-4">Tree insights</h3>
+        <ul class="list-unstyled small mb-3">
+          <li>Total nodes: {{ summary.total_nodes }}</li>
+          <li>Leaf nodes: {{ summary.leaf_nodes }}</li>
+          <li>Maximum depth: {{ summary.max_depth }}</li>
+        </ul>
+        {% set metadata_ns = namespace(items=[]) %}
+        {% for tree in entry.get('trees', []) %}
+          {% set metadata_ns.items = metadata_ns.items + tree.get('metadata', []) %}
+        {% endfor %}
+        {% if metadata_ns.items %}
+        <h3 class="h6 mt-4">API usage</h3>
+        <ul class="list-unstyled small mb-0">
+          {% set live_calls = metadata_ns.items | selectattr('mode', 'equalto', 'live') | list %}
+          {% set demo_calls = metadata_ns.items | selectattr('mode', 'equalto', 'demo') | list %}
+          <li>Total calls: {{ metadata_ns.items|length }}</li>
+          {% if live_calls %}
+          <li>Live calls: {{ live_calls|length }}</li>
+          <li>Total tokens: {{ live_calls | map(attribute='total_tokens') | map('default', 0) | sum }}</li>
+          <li>Prompt tokens: {{ live_calls | map(attribute='prompt_tokens') | map('default', 0) | sum }}</li>
+          <li>Completion tokens: {{ live_calls | map(attribute='completion_tokens') | map('default', 0) | sum }}</li>
+          <li>Time spent: {{ live_calls | map(attribute='elapsed_seconds') | map('default', 0) | sum }}s</li>
+          {% endif %}
+          {% if demo_calls %}
+          <li>Demo calls: {{ demo_calls|length }}</li>
+          {% endif %}
+        </ul>
+        {% else %}
+        <p class="text-muted small mb-0">No API usage data recorded.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

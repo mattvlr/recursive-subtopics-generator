@@ -1,42 +1,58 @@
-# Recursive Subtopics Generator
-This project is a Python script that generates a hierarchical structure of subtopics for a given list of topics using GPT-3.5-turbo from OpenAI. It creates subtopic directories in a JSON folder and allows the user to set the maximum depth level for subtopic generation.
+# Subtopic Explorer
+
+Subtopic Explorer is a Flask web application that turns the original recursive subtopic generator script into an interactive tool. Enter one or more high-level topics and the app will build a nested tree of subtopics using OpenAI's chat completions. A history view keeps track of every generation and lets you download the JSON payload for further analysis. When you do not have an API key configured, the site runs in a deterministic demo mode so you can preview the experience locally.
 
 ## Features
 
-- Generate subtopics for a given list of topics using GPT-3.5-turbo
-- Create hierarchical directory structure for subtopics in a JSON folder
-- User can set a maximum depth level for subtopic generation
+- Web UI for generating one or more subtopic trees with adjustable recursion depth, temperature, and OpenAI model.
+- Demo mode that synthesizes predictable sample subtopics when no API key is available.
+- Workspace settings page to securely store your OpenAI API key, set default generation options, and curate starter topics.
+- Persistent history with favorites, search, pinned insights, and one-click exports (per-entry or full archive).
+- Interactive tree viewer with collapsible nodes, automatic node statistics, and quick topic chips for inspiration.
 
-## Use Cases
+## Getting started
 
-This project can be used to create a hierarchical structure of topics and subtopics for various purposes, such as:
+### Prerequisites
 
-- Organizing knowledge in a wiki-like format
-- Creating a structured database of topics for a content management system
-- Developing a content recommendation system based on related topics
+- Python 3.10+
+- A valid OpenAI API key (optional for demo mode)
 
-## Prerequisites
+### Installation
 
-To use this script, you need an API key for OpenAI's GPT-3.5-turbo. Sign up for an API key [here](https://beta.openai.com/signup/).
-
-## Installation
-
-1. Clone the repository:
-git clone https://github.com/mattvlr/recursive-subtopics-generator
-2. Install the required dependencies:
+```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-3. Set your OpenAI API key as an environment variable:
-config.py
+```
 
-## Usage
+Set your API key in one of three ways:
 
-1. Modify the `main` function in `subtopic_generator.py` to customize the list of topics and the maximum depth level for subtopic generation.
+1. Open the in-app **Settings** page (recommended) and paste your key into the OpenAI connection form.
+2. Edit `config.py` and set `API_KEY`.
+3. Export an environment variable before starting the server:
 
-2. Run the script:
-python3 main.py
-3. The script will create subtopic directories in the `json` folder, organized by the specified topics and subtopics.
+```bash
+export OPENAI_API_KEY="sk-your-key"
+```
 
-4. Explore the generated subtopic hierarchy in the `json` folder.
+### Running the development server
+
+```bash
+flask --app main run --debug
+```
+
+The app will start on [http://localhost:5000](http://localhost:5000). Use the form on the home page to enter top-level topics and generate your topic maps. Visit the history page to search, pin favorites, clear runs, or export JSON. The settings page persists its configuration in `instance/settings.json` so tweaks survive restarts.
+
+## Project structure
+
+- `app/__init__.py` – Flask application factory and configuration helpers.
+- `app/routes.py` – HTTP routes and controller logic.
+- `app/services/subtopics.py` – Recursive generator that calls OpenAI or demo mode.
+- `app/storage.py` – Simple JSON-backed history store.
+- `app/settings.py` – JSON-backed workspace configuration helpers.
+- `app/templates/` – Jinja templates for the UI.
+- `app/static/` – Styles for the interface.
+- `main.py` – WSGI entry point for running the Flask app.
 
 ## License
 

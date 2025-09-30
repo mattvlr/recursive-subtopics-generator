@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Subtopic Explorer{% endblock %}
+{% block content %}
+<div class="row g-4 align-items-stretch">
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="card-title h4 mb-3">Generate new subtopic maps</h2>
+        <p class="text-muted">Enter one or more top-level topics separated by commas or line breaks. Choose how deep the generator should explore each topic and whether to run in demo mode.</p>
+        <form method="post" action="{{ url_for('main.generate') }}" class="needs-validation" novalidate>
+          <div class="mb-3">
+            <label for="topics" class="form-label">Topics</label>
+            <textarea class="form-control" id="topics" name="topics" rows="4" placeholder="e.g. Renewable Energy, Space Exploration, Machine Learning"></textarea>
+            {% if default_topics %}
+            <div class="form-text">Tip: click any starter topic to add it to the list.</div>
+            <div class="topic-suggestions mt-2">
+              {% for topic in default_topics %}
+                <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1 topic-chip" data-topic="{{ topic }}">{{ topic }}</button>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <label for="depth" class="form-label">Depth</label>
+              <input type="number" min="1" max="6" class="form-control" id="depth" name="depth" value="{{ app_settings.default_depth }}">
+              <div class="form-text">Levels of recursion (1 = only direct subtopics).</div>
+            </div>
+            <div class="col-md-6">
+              <label for="temperature" class="form-label">Creativity</label>
+              <input type="number" step="0.1" min="0" max="1" class="form-control" id="temperature" name="temperature" value="{{ app_settings.default_temperature }}">
+              <div class="form-text">Higher values provide more varied subtopics.</div>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <label for="model" class="form-label">Model</label>
+              <select id="model" name="model" class="form-select">
+                {% for option in app_settings.available_models %}
+                  <option value="{{ option }}" {% if option == app_settings.default_model %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="1" id="demo_mode" name="demo_mode" {% if app_settings.default_demo_mode or not app_settings.has_api_key %}checked{% endif %}>
+                <label class="form-check-label" for="demo_mode">
+                  Demo mode (no API key required)
+                </label>
+              </div>
+            </div>
+          </div>
+          {% if not app_settings.has_api_key %}
+          <div class="alert alert-info mt-3 mb-0">
+            No OpenAI API key detected. Demo mode is enabled automatically. Visit the <a href="{{ url_for('main.settings') }}" class="alert-link">settings page</a> to add one for live generations.
+          </div>
+          {% endif %}
+          <div class="d-grid mt-4">
+            <button class="btn btn-primary btn-lg" type="submit">Build my topic map</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    {% if favorite_entries %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h2 class="card-title h5 mb-3">Pinned favorites</h2>
+        <p class="text-muted small">Quick access to the topic maps you revisit the most.</p>
+        <div class="list-group list-group-flush">
+          {% for entry in favorite_entries %}
+          <a href="{{ url_for('main.view_history_entry', entry_id=entry['id']) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold">★ {{ entry['topics']|join(', ') }}</div>
+              <div class="small text-muted">Nodes: {{ entry.get('summary', {}).get('total_nodes', '?') }} · Depth {{ entry['max_level'] }}</div>
+            </div>
+            <small class="text-muted">{{ entry['created_at']|format_datetime }}</small>
+          </a>
+          {% endfor %}
+        </div>
+        <div class="text-end mt-3">
+          <a href="{{ url_for('main.history', q='') }}" class="small">Manage favorites →</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="card-title h4 mb-3">Recent activity</h2>
+        {% if recent_history %}
+          <div class="list-group list-group-flush">
+          {% for entry in recent_history %}
+            <a href="{{ url_for('main.view_history_entry', entry_id=entry['id']) }}" class="list-group-item list-group-item-action">
+              <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">{{ entry['topics']|join(', ') }}</h5>
+                <small class="text-muted">{{ entry['created_at']|format_datetime }}</small>
+              </div>
+              <p class="mb-1 small text-muted">Depth {{ entry['max_level'] }} · {{ entry['model'] }} · {{ 'Demo' if entry['use_demo_mode'] else 'Live' }}</p>
+            </a>
+          {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No generations yet. Once you create a topic map it will appear here.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  const textarea = document.getElementById('topics');
+  if (textarea) {
+    const chips = document.querySelectorAll('.topic-chip');
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const value = chip.dataset.topic;
+        const existing = textarea.value.trim();
+        if (!existing) {
+          textarea.value = value;
+          return;
+        }
+        const segments = existing.split(/[,\n]/).map(part => part.trim()).filter(Boolean);
+        if (!segments.includes(value)) {
+          textarea.value = `${existing}\n${value}`;
+        }
+      });
+    });
+  }
+</script>
+{% endblock %}

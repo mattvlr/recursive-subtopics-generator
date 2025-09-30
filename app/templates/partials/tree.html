@@ -1,0 +1,17 @@
+<li>
+  <div class="tree-node">
+    <span class="tree-toggle">{{ tree['topic'] }}</span>
+    {% if tree.get('children') %}
+      <span class="badge bg-light text-dark ms-2">{{ tree['children']|length }} subtopics</span>
+    {% endif %}
+  </div>
+  {% if tree.get('children') %}
+  <ul>
+    {% for child in tree['children'] %}
+      {% with tree=child %}
+        {% include 'partials/tree.html' %}
+      {% endwith %}
+    {% endfor %}
+  </ul>
+  {% endif %}
+</li>

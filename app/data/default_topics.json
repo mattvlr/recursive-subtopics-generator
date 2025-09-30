@@ -1,14 +1,7 @@
-"""Application configuration defaults."""
-
-import os
-
-API_KEY = os.environ.get("OPENAI_API_KEY", "")
-
-DEFAULT_TOPICS = [
+[
     "Agriculture",
     "Anthropology",
     "Architecture",
-    "Art",
     "Astronomy",
     "Biology",
     "Business",
@@ -19,7 +12,8 @@ DEFAULT_TOPICS = [
     "Health",
     "History",
     "Mathematics",
+    "Music",
     "Psychology",
     "Science",
-    "Technology",
+    "Technology"
 ]

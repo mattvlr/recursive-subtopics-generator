@@ -13,7 +13,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
     config = None  # type: ignore
 
-from .settings import DEFAULT_SETTINGS, load_settings, mask_api_key
+from .services.models import fetch_available_models
+from .settings import DEFAULT_SETTINGS, SettingsStore, load_settings, mask_api_key
 
 
 def create_app(test_config: Dict[str, Any] | None = None) -> Flask:
@@ -56,6 +57,14 @@ def create_app(test_config: Dict[str, Any] | None = None) -> Flask:
     if not settings_path.exists():
         settings_path.write_text(json.dumps(DEFAULT_SETTINGS, indent=2), encoding="utf-8")
 
+    # Attempt to dynamically retrieve OpenAI models when an API key is available.
+    settings_store = SettingsStore(settings_path)
+    stored_settings = settings_store.load()
+    effective_api_key = stored_settings.get("api_key") or app.config.get("OPENAI_API_KEY", "")
+    dynamic_models = fetch_available_models(effective_api_key)
+    if dynamic_models:
+        app.config["AVAILABLE_MODELS"] = dynamic_models
+
     from .routes import main_bp
 
     app.register_blueprint(main_bp)
@@ -83,6 +92,10 @@ def create_app(test_config: Dict[str, Any] | None = None) -> Flask:
                 "available_models": app.config["AVAILABLE_MODELS"],
             }
         )
+        available_models: List[str] = app.config.get("AVAILABLE_MODELS", [])
+        default_model = public_settings.get("default_model")
+        if available_models and default_model not in available_models:
+            public_settings["default_model"] = available_models[0]
         return {
             "default_topics": settings.get("default_topics")
             or _load_default_topics(app),

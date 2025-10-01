@@ -55,8 +55,9 @@
             No OpenAI API key detected. Demo mode is enabled automatically. Visit the <a href="{{ url_for('main.settings') }}" class="alert-link">settings page</a> to add one for live generations.
           </div>
           {% endif %}
+          <div id="generation-status" class="alert alert-info mt-3 d-none" role="status"></div>
           <div class="d-grid mt-4">
-            <button class="btn btn-primary btn-lg" type="submit">Build my topic map</button>
+            <button class="btn btn-primary btn-lg" type="submit" id="generate-button">Make the subtopic map</button>
           </div>
         </form>
       </div>
@@ -111,6 +112,12 @@
 {% block scripts %}
 <script>
   const textarea = document.getElementById('topics');
+  const form = document.querySelector('form[action="{{ url_for('main.generate') }}"]');
+  const statusElement = document.getElementById('generation-status');
+  const modelSelect = document.getElementById('model');
+  const depthInput = document.getElementById('depth');
+  const temperatureInput = document.getElementById('temperature');
+  const demoModeCheckbox = document.getElementById('demo_mode');
   if (textarea) {
     const chips = document.querySelectorAll('.topic-chip');
     chips.forEach((chip) => {
@@ -125,6 +132,27 @@
         if (!segments.includes(value)) {
           textarea.value = `${existing}\n${value}`;
         }
+      });
+    });
+  }
+  if (form && statusElement) {
+    form.addEventListener('submit', () => {
+      const topics = textarea ? textarea.value.trim().split(/[\n,]/).map((item) => item.trim()).filter(Boolean) : [];
+      const selectedModel = modelSelect ? modelSelect.value : 'unknown model';
+      const depth = depthInput ? depthInput.value : 'N/A';
+      const temperature = temperatureInput ? temperatureInput.value : 'N/A';
+      const demoMode = demoModeCheckbox ? demoModeCheckbox.checked : false;
+      const summary = `Generating subtopic map with ${topics.length || 'no'} topic${topics.length === 1 ? '' : 's'} using ${selectedModel} at depth ${depth}.`;
+      statusElement.textContent = summary;
+      statusElement.classList.remove('d-none', 'alert-success', 'alert-danger');
+      statusElement.classList.add('alert-info');
+      console.log({
+        event: 'generate_subtopic_map',
+        topics,
+        model: selectedModel,
+        depth,
+        temperature,
+        demoMode,
       });
     });
   }

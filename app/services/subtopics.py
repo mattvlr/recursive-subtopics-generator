@@ -11,8 +11,9 @@ from typing import Any, Dict, Iterable, List, Tuple
 import openai
 
 PROMPT_TEMPLATE = """
-Given a topic, return a JSON object of subtopics for the topic.\n
-Return the response as a JSON object with a single key named "subtopics" whose value is a list of concise subtopic strings.\n
+You must reply with a single JSON object containing one property named "subtopics" whose value is a list of concise child topics.\n
+Return only valid JSON without commentary, markdown fences, or trailing text.\n
+Parent topic path: {parent_path}\n
 Topic: {topic}
 """.strip()
 
@@ -52,6 +53,7 @@ def generate_topic_tree(
             temperature=request.temperature,
             model=request.model,
             use_demo_mode=request.use_demo_mode or not api_key,
+            ancestry=(),
         )
         tree = {
             "topic": topic,
@@ -80,6 +82,7 @@ def _build_tree(
     temperature: float,
     model: str,
     use_demo_mode: bool,
+    ancestry: Tuple[str, ...],
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     if level > max_level:
         return [], []
@@ -90,6 +93,7 @@ def _build_tree(
         temperature=temperature,
         model=model,
         use_demo_mode=use_demo_mode,
+        ancestry=ancestry,
     )
 
     children: List[Dict[str, Any]] = []
@@ -103,6 +107,7 @@ def _build_tree(
             temperature=temperature,
             model=model,
             use_demo_mode=use_demo_mode,
+            ancestry=ancestry + (topic,),
         )
         children.append(
             {
@@ -122,9 +127,16 @@ def _fetch_subtopics(
     temperature: float,
     model: str,
     use_demo_mode: bool,
+    ancestry: Tuple[str, ...],
 ) -> Tuple[Iterable[str], Dict[str, Any] | None]:
+    parent_path = " > ".join(ancestry) if ancestry else "ROOT"
+
     if use_demo_mode:
-        return _demo_subtopics(topic), {"mode": "demo"}
+        return _demo_subtopics(topic), {
+            "mode": "demo",
+            "topic": topic,
+            "parent_path": parent_path,
+        }
 
     if not api_key:
         raise SubtopicGenerationError(
@@ -136,7 +148,19 @@ def _fetch_subtopics(
         start_time = time.monotonic()
         response = openai.ChatCompletion.create(
             model=model,
-            messages=[{"role": "user", "content": PROMPT_TEMPLATE.format(topic=topic)}],
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You respond only with valid JSON objects containing a 'subtopics' array.",
+                },
+                {
+                    "role": "user",
+                    "content": PROMPT_TEMPLATE.format(
+                        topic=topic,
+                        parent_path=parent_path,
+                    ),
+                },
+            ],
             temperature=temperature,
         )
         elapsed = time.monotonic() - start_time
@@ -154,6 +178,8 @@ def _fetch_subtopics(
         }
     else:
         response_metadata = {"mode": "live", "elapsed_seconds": round(elapsed, 2)}
+
+    response_metadata.update({"topic": topic, "parent_path": parent_path})
 
     message = response["choices"][0]["message"]["content"]
     try:
